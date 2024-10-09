@@ -9,7 +9,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
-CORS(app)
+CORS(app)#allows react to acess the resourcses at our server/backend
 migrate = Migrate(app, db)
 
 db.init_app(app)
@@ -19,13 +19,25 @@ def messages():
     if request.method == 'GET':
         messages = Message.query.order_by('created_at').all()
 
+        if not messages:
+            return make_response(
+                jsonify({"error":"No messages found"}),404
+            )
+
         response = make_response(
             jsonify([message.to_dict() for message in messages]),
             200,
         )
+        
     
     elif request.method == 'POST':
         data = request.get_json()
+
+        if not all(key in data for key in ['body','username']):
+            return make_response(
+                jsonify({"error":"Missing required fields:'body','username'"}),404
+            )
+                                           
         message = Message(
             body=data['body'],
             username=data['username']
